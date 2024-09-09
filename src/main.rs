@@ -1,6 +1,6 @@
 use clap::Parser;
-use env_logger::{Env};
-use log::{error, info, warn};
+use tracing::{info, Level};
+use tracing_subscriber::FmtSubscriber;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -29,11 +29,14 @@ async fn run(args: &BifrostArgs) {
 }
 
 fn init_logger() {
-    let env = Env::default()
-        .filter_or("LOG_LEVEL", "trace")
-        .write_style_or("LOG_STYLE", "always");
+    let subscriber = FmtSubscriber::builder()
+        // all spans/events with a level higher than TRACE (e.g, debug, info, warn, etc.)
+        // will be written to stdout.
+        .with_max_level(Level::TRACE)
+        .finish();
 
-    env_logger::init_from_env(env);
+    tracing::subscriber::set_global_default(subscriber)
+        .expect("setting default subscriber failed");
 }
 
 #[tokio::main]
