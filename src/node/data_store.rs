@@ -1,21 +1,14 @@
-use strata_node_rs::co::topl::consensus::models::BlockId;
+use std::fmt::Display;
 
 use super::app_config::NodeConfig;
 
-trait Show {
-    type T;
+struct BlockId(strata_node_rs::co::topl::consensus::models::BlockId);
 
-    fn to_string(&self) -> String;
-}
-
-impl Show for BlockId {
-    type T = BlockId;
-
-    fn to_string(&self) -> String {
+impl Display for BlockId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let block_id_string =
-            std::str::from_utf8(&self.value.as_slice()).expect("Invalid UTF-8 Sequence");
-
-        return format!("b_{block_id_string}");
+            std::str::from_utf8(&self.0.value.as_slice()).expect("Invalid UTF-8 Sequence");
+        return write!(f, "{}", format!("b_{block_id_string}"));
     }
 }
 
