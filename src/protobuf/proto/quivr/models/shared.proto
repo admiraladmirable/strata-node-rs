@@ -1,0 +1,120 @@
+syntax = "proto3";
+
+package quivr.models;
+
+import "validate/validate.proto";
+
+// General purpose data
+message Data {
+    // Byte representation of data value
+    bytes value = 1;
+}
+
+// Data format used for metadata
+message SmallData {
+    // Maximum length = 64
+    bytes value = 1 [(validate.rules).bytes.max_len = 64];
+}
+
+// Event root
+message Root {
+    bytes value = 1 [(validate.rules).bytes.len = 32];
+}
+
+// Preimage (input) for a digest operation
+message Preimage {
+    bytes input = 1 [(validate.rules).bytes.max_len = 16384];
+    bytes salt = 2 [(validate.rules).bytes.max_len = 16384];
+}
+
+// Information output to Hash
+message Digest {
+    // strict length = 32
+    bytes value = 1 [(validate.rules).bytes.len = 32];
+}
+
+// Encapsulates digest and preimage used to verify that preimage results in digest
+message DigestVerification {
+    Digest digest = 1 [(validate.rules).message.required = true];
+    Preimage preimage = 2 [(validate.rules).message.required = true];
+}
+
+// public key in a key pair used for verification
+message VerificationKey {
+    oneof vk {
+        // either ed25519 or extendedEd25519 must be set.
+        option (validate.required) = true;
+        Ed25519Vk ed25519 = 1;
+        ExtendedEd25519Vk extendedEd25519 = 2;
+    }
+    message Ed25519Vk {
+        bytes value = 1 [(validate.rules).bytes.len = 32];
+    }
+    message ExtendedEd25519Vk {
+        Ed25519Vk vk = 1 [(validate.rules).message.required = true];
+        bytes chainCode = 2 [(validate.rules).bytes.len = 32];
+    }
+}
+
+// Private key used to sign
+message SigningKey {
+    oneof sk {
+        // either ed25519 or extendedEd25519 must be set.
+        option (validate.required) = true;
+        Ed25519Sk ed25519 = 1;
+        ExtendedEd25519Sk extendedEd25519 = 2;
+    }
+    message Ed25519Sk {
+        bytes value = 1 [(validate.rules).bytes.len = 32];
+    }
+    message ExtendedEd25519Sk {
+        bytes leftKey = 1 [(validate.rules).bytes.len = 32];
+        bytes rightKey = 2 [(validate.rules).bytes.len = 32];
+        bytes chainCode = 3 [(validate.rules).bytes.len = 32];
+    }
+}
+
+// Public and private key pairs used to sign and verify
+message KeyPair{
+    VerificationKey vk = 1 [(validate.rules).message.required = true];
+    SigningKey sk = 2 [(validate.rules).message.required = true];
+}
+
+// Message to sign
+message Message {
+    bytes value = 1;
+}
+
+// generated signature
+message Witness {
+    bytes value = 1 [(validate.rules).bytes.len = 64];
+}
+
+// encapsulates data used to verify a signing routine
+message SignatureVerification {
+    VerificationKey verificationKey = 1 [(validate.rules).message.required = true];
+    Witness signature = 2 [(validate.rules).message.required = true];
+    Message message = 3 [(validate.rules).message.required = true];
+}
+
+// signable in bytes
+message SignableBytes {
+    bytes value = 1;
+}
+
+// Transaction bind uses signable bytes to bind a proof
+message TxBind {
+    bytes value = 2 [(validate.rules).bytes.len = 32];
+}
+
+// Represents a 128-bit integer
+message Int128 {
+    // Java BigInt Representation: two's-complement, big-endian
+    bytes value = 1 [(validate.rules).bytes.max_len = 16];
+}
+
+message Ratio {
+    quivr.models.Int128 numerator = 1 [(validate.rules).message.required = true];
+    // Populate with 1 if not defined
+    quivr.models.Int128 denominator = 2 [(validate.rules).message.required = true];
+}

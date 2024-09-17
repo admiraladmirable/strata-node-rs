@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package co.topl.brambl.models;
+
+import 'validate/validate.proto';
+
+import 'quivr/models/shared.proto';
+
+ // Evidence should be a succinct, unique set of bytes used to distinguish between any two data objects.
+ // Evidence is also meant to have a minimal amount of structure such that other domains may provide
+ // their own similarly unique & succinct values. Quivr can cast such external domain "evidence" into Topl evidence
+ // through the use of ContainsSignable[Evidence[_]]
+message Evidence {
+    quivr.models.Digest digest = 1 [(validate.rules).message.required = true];
+}

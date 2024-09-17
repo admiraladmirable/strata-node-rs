@@ -1,0 +1,310 @@
+syntax = "proto3";
+
+///////////////////////////////////////////////////////////////////////////////
+// Services provided by Genus
+///////////////////////////////////////////////////////////////////////////////
+
+package co.topl.genus.services;
+
+import 'brambl/models/address.proto';
+import 'brambl/models/identifier.proto';
+import 'brambl/models/event.proto';
+import 'consensus/models/block_id.proto';
+import 'genus/genus_models.proto';
+import 'google/protobuf/wrappers.proto';
+import 'node/models/block.proto';
+
+import "validate/validate.proto";
+
+// Operations related to blocks
+service BlockService {
+  // Retrieve a block with the specified `id` from the configured Genus service. This returns its result when there is a
+  // block present in the genus service with the specified id and the confidence factor of the block is greater than or
+  // equal to the value of the `confidenceFactor` parameter.
+  rpc getBlockById(GetBlockByIdRequest) returns (BlockResponse);
+
+  // Retrieve the block at the specified height from the configured Genus service, where the height of the genesis block
+  // is 1. This returns a result when there is a block present in the genus service at the specified height and the
+  // confidence factor of the block is greater than or equal to the value of the `confidenceFactor` parameter.
+  rpc getBlockByHeight(GetBlockByHeightRequest) returns (BlockResponse);
+
+  // Retrieve the block at the specified depth from the configured Genus service. This returns its result immediately.
+  // The block at depth 1 is the highest block with a confidence factor that is greater than or
+  // equal to the value of the `confidenceFactor` parameter.
+  //
+  // Since blocks keep getting added, we expect that multiple calls to this with the same argument will return different blocks.
+  rpc getBlockByDepth(GetBlockByDepthRequest) returns (BlockResponse);
+}
+
+// Operations related to GenusBlock contents
+service TransactionService {
+  // Retrieve a transaction with the specified `id` from the configured Genus service. This returns its result when there is
+  // a transaction present in the genus service with the specified id and the confidence factor of the block that contains
+  // the transaction is greater than or equal to the value of the `confidenceFactor` parameter.
+  rpc getTransactionById(GetTransactionByIdRequest) returns (TransactionResponse);
+
+  // Retrieve transactions that have an input or output associated with any of the specified addresses from the configured
+  // Genus service. This returns a stream of existing and future transactions from the genus service with the specified id
+  // that are in a block with confidence factor greater than or equal to the value of the `confidenceFactor` parameter.
+  rpc getTransactionByLockAddressStream(QueryByLockAddressRequest) returns(stream TransactionResponse);
+
+  // In the future there will be a way to find transactions using a bloom filter.
+  //rpc getTransactionByBloomFilter();
+
+  // Retrieve from the configured Genus service TxOs (spent or unspent) that are associated with any of the specified
+  // addresses and are in a block whose confidence factor is greater than or equal to the value of the `confidenceFactor`
+  // parameter. This returns immediately.
+  rpc getTxosByLockAddress(QueryByLockAddressRequest) returns(TxoLockAddressResponse);
+
+  // Retrieve from the configured Genus service TxOs (spent or unspent) that are associated with any of the specified
+  // addresses and are in a block whose confidence factor is greater than or equal to the value of the `confidenceFactor`
+  // parameter. As new TxOs are added or UTxOs are spent that match the request, additional results are returned.
+  rpc getTxosByLockAddressStream(QueryByLockAddressRequest) returns(stream TxoLockAddressResponse);
+
+  // Retrieve from the configured Genus service TxOs (spent or unspent) that contain the type of asset specified by the
+  // asset label and are in a block whose confidence factor is greater than or equal to the value of the `confidenceFactor`
+  // parameter. As new TxOs are added or UTxOs are spent that match the request, additional results are returned.
+  rpc getTxosByAssetLabel(QueryByAssetLabelRequest) returns(stream TxoResponse);
+
+  /////////////////////////////////////////////////////////////////////////////
+  //
+  // The following RPCs are for managing database indexes on the data fields of
+  // transactions.
+  //
+  // They also allow the indexes to be based on field values that are embedded
+  // in the data. Two types of field organization are supported. One is data
+  // that is a JSON object. The other is data that is character separated
+  // fields.
+  //
+  /////////////////////////////////////////////////////////////////////////////
+
+  // Create an index on transactions in the Genus database. The index will allow transactions to be found quickly based on
+  // the contents of their data field.
+  //
+  // This returns as soon as the index is created. After the index is created, if the `populate` parameter is true then Genus
+  // will asynchronously populate the index.
+  rpc createOnChainTransactionIndex(CreateOnChainTransactionIndexRequest) returns (CreateOnChainTransactionIndexResponse);
+
+  // Return a collection of `IndexSpec` objects, where each `IndexSpec` object corresponds to an index in the Genus database.
+  // The content of each `IndexSpec` object is the same as the `IndexSpec ` object used to create the index.
+  rpc getExistingTransactionIndexes(GetExistingTransactionIndexesRequest) returns (GetExistingTransactionIndexesResponse);
+
+  // Retrieve transactions that are included in the named index. If the `keys` parameter is supplied, then only transactions
+  // whose index records match the specified key values are included in the result.
+  rpc getIndexedTransactions(GetIndexedTransactionsRequest) returns(stream TransactionResponse);
+
+  // Delete an index from the Genus database.
+  rpc dropIndex(DropIndexRequest) returns (DropIndexResponse);
+}
+
+// Operations related to Network Metrics
+service NetworkMetricsService {
+  // Retrieve Txo Stats
+  rpc getTxoStats(GetTxoStatsReq) returns (GetTxoStatsRes);
+  // Retrieve Blockchain Size Stats
+  rpc getBlockchainSizeStats(BlockchainSizeStatsReq) returns (BlockchainSizeStatsRes);
+  // Retrieve Block Stats
+  rpc getBlockStats(BlockStatsReq) returns (BlockStatsRes);
+}
+
+
+// Operations related to Value specifics Items. Value: TOPL, LVL,...
+service TokenService {
+  // Retrieve a group Policy with the specified `id` from the configured Genus service
+  rpc getGroupPolicy(QueryByGroupIdRequest) returns (GroupPolicyResponse);
+
+  // Retrieve a series Policy with the specified `id` from the configured Genus service
+  rpc getSeriesPolicy(QueryBySeriesIdRequest) returns (SeriesPolicyResponse);
+}
+
+message GetExistingTransactionIndexesResponse {
+  IndexSpecs indexSpecs = 1 [(validate.rules).message.required = true];
+}
+
+message BlockResponse {
+  node.models.FullBlock block = 1 [(validate.rules).message.required = true];
+}
+
+message TransactionResponse {
+  TransactionReceipt transactionReceipt = 1 [(validate.rules).message.required = true];
+}
+
+message TxoResponse {
+  Txo txo = 1 [(validate.rules).message.required = true];
+}
+
+message GetBlockByIdRequest {
+  consensus.models.BlockId blockId = 1 [(validate.rules).message.required = true];
+  ConfidenceFactor confidenceFactor = 2;
+}
+
+message GetBlockByHeightRequest {
+  ChainDistance height = 1 [(validate.rules).message.required = true];
+  ConfidenceFactor confidenceFactor = 2;
+}
+
+message GetBlockByDepthRequest {
+  ChainDistance depth = 1 [(validate.rules).message.required = true];
+  ConfidenceFactor confidenceFactor = 2;
+}
+
+// Used to request a transaction by specifying its ID.
+message GetTransactionByIdRequest {
+  brambl.models.TransactionId transactionId = 1 [(validate.rules).message.required = true];
+  // The default value for confidenceFactor is 0.9999999 (7 nines)
+  ConfidenceFactor confidenceFactor = 2;
+}
+
+// Request type for NetworkMetricsService:getTxoStats
+message GetTxoStatsReq {}
+
+// Response type for NetworkMetricsService:getTxoStats
+message GetTxoStatsRes {
+  TxoStats txos = 1 [(validate.rules).message.required = true];
+}
+
+// Request type for NetworkMetricsService:getBlockchainSizeStats
+message BlockchainSizeStatsReq {}
+
+// Response type for NetworkMetricsService:getBlockchainSizeStats
+message BlockchainSizeStatsRes {
+  BlockchainSizeStats blockchainSize = 1 [(validate.rules).message.required = true];
+}
+
+// Request type for NetworkMetricsService:getBlockStats
+message BlockStatsReq {}
+
+// Response type for NetworkMetricsService:getBlockStats
+message BlockStatsRes {
+  BlockStats blockStats = 1 [(validate.rules).message.required = true];
+}
+
+// Response from CreateOnChainTransactionIndex request
+message CreateOnChainTransactionIndexResponse {
+  // True if index was created.
+  bool ok = 1;
+}
+
+// Used to request TxOs by their associated lock address
+message QueryByLockAddressRequest {
+  // Address of interest
+  brambl.models.LockAddress address = 1 [(validate.rules).message.required = true];
+  // The default value for confidenceFactor is 0.9999999 (7 nines)
+  ConfidenceFactor confidenceFactor = 2;
+  // Filter by status
+  TxoState state = 3;
+}
+
+// Used to request TxOs by their asset type
+message QueryByAssetLabelRequest {
+  AssetLabel assetLabel = 1 [(validate.rules).message.required = true];
+  // The default value for confidenceFactor is 0.9999999 (7 nines)
+  ConfidenceFactor confidenceFactor = 2;
+}
+
+message TxoLockAddressResponse {
+  repeated Txo Txos = 1;
+}
+
+// A request to create an index of transactions based on their on-chain data
+message CreateOnChainTransactionIndexRequest {
+  IndexSpec indexSpec = 1 [(validate.rules).message.required = true];
+  // If populate is true, then scan the existing transaction in the database to populate the index.
+  bool populate = 2;
+}
+
+// Used to request a group policy associated by groupId
+message QueryByGroupIdRequest {
+  // GroupId of interest
+  brambl.models.GroupId groupId = 1 [(validate.rules).message.required = true];
+}
+
+message GroupPolicyResponse {
+  brambl.models.Event.GroupPolicy groupPolicy = 1;
+}
+
+// Used to request a series policy associated by seriesId
+message QueryBySeriesIdRequest {
+  // GroupId of interest
+  brambl.models.SeriesId seriesId = 1 [(validate.rules).message.required = true];
+}
+
+message SeriesPolicyResponse {
+  brambl.models.Event.SeriesPolicy seriesPolicy = 1;
+}
+
+// Definitions of existing database indexes.
+message IndexSpecs {
+  repeated IndexSpec indexSpec = 1;
+}
+
+message IndexDef {
+  oneof xdev {
+    CreateOnChainTransactionIndexRequest onChain = 1;
+  }
+}
+
+// The message that is sent when requesting information about the existing Genus indexes
+message GetExistingTransactionIndexesRequest {
+
+}
+
+// Specify the name of an index to be dropped
+message DropIndexRequest {
+  string indexName = 1;
+}
+
+// Return true if the requested index was dropped or false if it was not (Most likely because it did not exist).
+message DropIndexResponse {
+  bool dropped = 1;
+}
+
+// Request the use of a named index to find transactions containing data that matches specified values.
+message GetIndexedTransactionsRequest {
+  // The name of the index to search
+  string indexName = 1;
+
+  // The index value(s) to search for.
+  repeated IndexMatchValue value = 2;
+
+  // The maximum number of transactions to be returned
+  uint32 maxResults = 3;
+
+  // A number of transactions to be skipped. This is useful for paging results.
+  uint64 skipResults = 4;
+}
+
+// A value that may match a field in an index.
+message IndexMatchValue {
+  oneof value {
+    string stringValue = 1;
+    int64 intValue = 2;
+    uint64 uintValue = 3;
+  }
+  google.protobuf.StringValue fieldName = 4;
+}
+
+message TxoStats {
+  uint64 spent = 1;
+  uint64 unspent = 2;
+  uint64 pending = 4;
+  uint64 total = 5;
+}
+
+message BlockchainSizeStats {
+  // Sum of BlockHeader immutable bytes
+  uint64 blockHeaderBytes = 1;
+  // Sum of Transaction immutable bytes
+  uint64 transactionBytes = 2;
+}
+
+message BlockStats {
+  // Sum of empty Blocks, total blocks without transactions in them
+  uint64 empty = 1;
+  // Sum of nonEmpty, total blocks with transactions in them
+  uint64 nonEmpty = 2;
+}
+
+//service SubscriptionService {
+//  rpc getAvailableMessageQueues(AvailableMessageQueueRequest) returns (AvailableMessageQueueResponse);
+//}

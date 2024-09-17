@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package co.topl.brambl.models;
+
+import 'validate/validate.proto';
+import 'brambl/models/identifier.proto';
+
+// Used in UTXOs
+message LockAddress {
+    uint32 network = 1;
+    uint32 ledger = 2;
+    LockId id = 3 [(validate.rules).message.required = true];
+}
+
+// Used in STXOs
+message TransactionOutputAddress {
+    uint32 network = 1;
+    uint32 ledger = 2;
+    // index of the output (UTXO) within the transaction targeted by id.
+    uint32 index = 3;
+    TransactionId id = 4 [(validate.rules).message.required = true];
+}
+
+// Used in Challenge.PreviousProposition
+message TransactionInputAddress {
+    uint32 network = 1;
+    uint32 ledger = 2;
+    uint32 index = 3;
+    TransactionId id = 4 [(validate.rules).message.required = true];
+}

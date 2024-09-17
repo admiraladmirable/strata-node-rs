@@ -1,5 +1,5 @@
 [package]
-name = "bifrost-rs"
+name = "strata-node-rs"
 version = "0.1.0"
 edition = "2021"
 
@@ -14,7 +14,17 @@ ed25519 = "2.2.3"
 protobuf = "3.5.1"
 tonic = "0.12.2"
 tracing = "0.1.40"
-serde = "1.0.210"
+serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
-serde_yaml = "0.9.34"
 tracing-subscriber = "0.3.18"
+serde_yml = "0.0.12"
+itertools = "0.13.0"
+rand = "0.8.5"
+rusty-leveldb = { version = "3.0.0", features = ["fs"] }
+prost = "0.13.2"
+prost-types = "0.13.2"
+serde_bytes = "0.11.15"
+bincode = "1.3.3"
+
+[build-dependencies]
+prost-build = "0.13.2"

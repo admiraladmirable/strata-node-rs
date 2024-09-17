@@ -8,6 +8,7 @@
   packages = [
     pkgs.git
     pkgs.clippy
+    pkgs.protobuf
   ];
 
   # https://devenv.sh/languages/

@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package co.topl.consensus.models;
+
+import 'consensus/models/block_id.proto';
+import 'consensus/models/eligibility_certificate.proto';
+import 'consensus/models/operational_certificate.proto';
+import 'consensus/models/staking.proto';
+import 'consensus/models/protocol_version.proto';
+
+import "validate/validate.proto";
+
+// Captures a block producer's consensus-commitment to a new block
+message BlockHeader {
+  // The ID of _this_ block header.  This value is optional and its contents are not included in the signable or identifiable data.  Clients which _can_ verify
+  // this value should verify this value, but some clients may not be able to or need to, in which case this field acts as a convenience.
+  BlockId headerId = 12;
+  // The parent block's ID.  Each header builds from a single parent.
+  BlockId parentHeaderId = 1 [(validate.rules).message.required = true];
+  // The slot of the parent block
+  uint64 parentSlot = 2;
+  // The commitment/accumulator of the block body
+  // length = 32
+  bytes txRoot = 3 [(validate.rules).bytes.len = 32];
+  // A fuzzy search for addresses associated with this block
+  // length = 256
+  bytes bloomFilter = 4[(validate.rules).bytes.len = 256];
+  // The UTC UNIX timestamp (ms) when the block was created
+  uint64 timestamp = 5;
+  // The 1-based index of this block in the blockchain
+  uint64 height = 6;
+  // The time-slot in which the block producer created the block
+  uint64 slot = 7;
+  // A certificate indicating that the block producer was eligible to make this block
+  EligibilityCertificate eligibilityCertificate = 8 [(validate.rules).message.required = true];
+  // A certificate indicating the operator's commitment to this block
+  OperationalCertificate operationalCertificate = 9 [(validate.rules).message.required = true];
+  // Optional metadata stamped by the operator.  Must be latin-1 encoded, and must be at most 32 bytes in length.
+  // optional
+  bytes metadata = 10 [(validate.rules).bytes.max_len = 32];
+  // The operator's staking address
+  StakingAddress address = 11 [(validate.rules).message.required = true];
+  // Protocol Version
+  ProtocolVersion version = 13 [(validate.rules).message.required = true];
+}

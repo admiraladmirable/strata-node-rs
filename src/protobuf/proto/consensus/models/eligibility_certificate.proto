@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package co.topl.consensus.models;
+
+import "validate/validate.proto";
+
+// A certificate proving the operator's election
+message EligibilityCertificate {
+  // Signs `eta ++ slot` using the `vrfSK`
+  bytes vrfSig = 1 [(validate.rules).bytes.len = 80];
+  // The VRF VK
+  bytes vrfVK = 2 [(validate.rules).bytes.len = 32];
+  // Hash of the operator's `threshold`
+  // routine = blake2b256
+  // length = 32
+  bytes thresholdEvidence = 3 [(validate.rules).bytes.len = 32];
+  // The epoch's randomness
+  // length = 32
+  bytes eta = 4 [(validate.rules).bytes.len = 32];
+}
