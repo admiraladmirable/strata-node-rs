@@ -1,4 +1,4 @@
-use std::hash::{Hash, Hasher};
+use std::hash::{Hash};
 
 use strata_node_rs::co::topl::consensus::models::SignatureKesSum;
 

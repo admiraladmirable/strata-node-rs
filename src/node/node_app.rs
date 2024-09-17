@@ -1,7 +1,11 @@
-use tracing::{info, Level};
+use tracing::info;
 
 use super::app_config::NodeConfig;
 
-async fn run(args: &NodeConfig) {
-    info!("Launching node with args={args:?}");
+pub struct NodeApp;
+
+impl NodeApp {
+    pub async fn run(args: &NodeConfig) {
+        info!("Launching node with args={args:?}");
+    }
 }

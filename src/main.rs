@@ -1,7 +1,7 @@
 use clap::Parser;
-use node::app_config::NodeConfig;
+use node::{app_config::NodeConfig, node_app::NodeApp};
 
-use tracing::{info, Level};
+use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 
 mod crypto;
@@ -20,5 +20,6 @@ async fn main() {
     init_logger();
 
     let args = NodeConfig::parse();
-    run(&args).await;
+    let _node = NodeApp;
+    NodeApp::run(&args).await;
 }

@@ -1,4 +1,4 @@
-use strata_node_rs::co::topl::{consensus::models::BlockId, node::models::Block};
+use strata_node_rs::co::topl::consensus::models::BlockId;
 
 use super::app_config::NodeConfig;
 
@@ -23,10 +23,10 @@ struct DataStore;
 
 impl DataStore {
     async fn create(args: &NodeConfig, genesis_id: BlockId) {
-        let data_dir = args
+        let _data_dir = args
             .data_dir
             .replace("{genesisBlockId}", genesis_id.to_string().as_str());
 
-        let mut db = rusty_leveldb::DB::open("strata-node", rusty_leveldb::Options::default());
+        let _db = rusty_leveldb::DB::open("strata-node", rusty_leveldb::Options::default());
     }
 }

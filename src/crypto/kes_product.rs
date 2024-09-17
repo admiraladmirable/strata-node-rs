@@ -19,9 +19,9 @@ struct KesProduct;
 
 impl KesProduct {
     pub fn create_key_pair(
-        seed: u8,
-        height: (i16, i16),
-        offset: i32,
+        _seed: u8,
+        _height: (i16, i16),
+        _offset: i32,
     ) -> (SecretKeyKesProduct, VerificationKesProductKey) {
         return (SecretKeyKesProduct, VerificationKesProductKey);
     }
